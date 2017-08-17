@@ -1,5 +1,28 @@
 import numpy as np
 import re
+from matplotlib import pyplot
+from mpl_toolkits.mplot3d import Axes3D
+
+
+fig = pyplot.figure()
+ax = Axes3D(fig)
+
+# Readings that do not result in a contrail prediction
+rtemp = []
+rpress = []
+rrh = []
+
+# Readings that result in a contrail prediction
+ptemp = []
+ppress = []
+prh = []
+
+
+ax.scatter(x, y, z)
+pyplot.show()
+
+
+
   
 # !  Physical constants 
 t0 = 273.16e0                # Absolute T
@@ -112,7 +135,12 @@ with open("weather.txt", "r") as infile:
             output = ("Pressure: " + str(pamb/1e3) + "mbar"+ " RHI: " + 
                       str(rhiamb * 100) + "% Tls: " + str(tls) + "C" +
                       " Tamb: " + str(tamb) + "C ---> PREDICTED"+ "\n")
-            outfile.write(output) 
+            outfile.write(output)
+          else :
+            # Configure point for graph
+            rtemp.append(tamb)
+            rpress.append(pamb/1e3)
+            rrh.append()
 
 outfile.write("\nTotal Lines: " + str(total))
 outfile.write("\nContrail Predictions: " + str(contrails))
