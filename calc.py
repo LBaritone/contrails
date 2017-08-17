@@ -1,4 +1,28 @@
 import numpy as np
+import re
+from matplotlib import pyplot
+from mpl_toolkits.mplot3d import Axes3D
+
+
+fig = pyplot.figure()
+ax = Axes3D(fig)
+
+# Readings that do not result in a contrail prediction
+rtemp = []
+rpress = []
+rrh = []
+
+# Readings that result in a contrail prediction
+ptemp = []
+ppress = []
+prh = []
+
+
+ax.scatter(x, y, z)
+pyplot.show()
+
+
+
   
 # !  Physical constants 
 t0 = 273.16e0                # Absolute T
@@ -25,73 +49,101 @@ delh = 42.e10                # Heat liberated per gram fuel
 wexh = 1.25e0                # Water vapor mixing ratio in exhaust
 effic = 0.3e0                # fraction of combustion heat converted to propulsion
 
+total = 0
+contrails = 0
 
-data = raw_input("Ambient Pressure, Relative Humidity: ").replace(',', ' ').split()
-pamb = float(data[0]) * 1.e3             # convert to bar
-rhamb = float(data[1]) / 100.
+outfile = open("prediction.txt", "w")
+with open("weather.txt", "r") as infile:
+    for line in infile:
+        total += 1
+        data = line.split()
+        if (len(data) > 10) and \
+           (not data[0].startswith('--')) and \
+           (not data[0].startswith('PRES')) and \
+           (not data[0].startswith('hPa')) and \
+           (not re.search('[^\.0-9]', data[0])) and \
+           (not re.search('[^\.0-9]', data[1])) :
 
-#  To find threshold temperature, begin at high ambient temperature and
-#  steadily decrease the temperature.  At each step, calculate the maximum
-#  plume relative humidity (with respect to water) [RH].  When the peak RH
-#  exceeds 1, then the threshold temperature has been reached.
-#  Prime slplume
+          pamb = float(data[0]) * 1.e3      # convert to bar
+          rhamb = float(data[5]) / 100.
 
-tamb = -31.9
-slplume = [0.1]
 
-itamb = 1
-idelt = 1
+          #  To find threshold temperature, begin at high ambient temperature and
+          #  steadily decrease the temperature.  At each step, calculate the maximum
+          #  plume relative humidity (with respect to water) [RH].  When the peak RH
+          #  exceeds 1, then the threshold temperature has been reached.
+          #  Prime slplume
 
-while (slplume[0] < 1) :
-  tamb = tamb - 0.1
-  tt = tamb + t0
+          tls = -31.9
+          slplume = [0.1]
 
-  # Ambient air density 
-  rnair = (pamb / tt) / bk 
+          itamb = 1
+          idelt = 1
 
-  # Liquid sat. H2O number density
-  rnsatl = 1000. * np.exp(c1 + c2/tt + c3/(tt**2) + c4/(tt**3)) / bk / tt
+          while (slplume[0] < 1) :
+            tls = tls - 0.1
+            tt = tls + t0
 
-  # Ice sat. H2O number density
-  fexp = np.exp((bb - tamb/bd) * tamb / (tamb + bc))
-  rnsati = 1.e3 * ba * fexp / bk / (tamb + t0) 
+            # Ambient air density 
+            rnair = (pamb / tt) / bk 
 
-  # Ambient RHI
-  rhiamb = rhamb * rnsatl/rnsati 
+            # Liquid sat. H2O number density
+            rnsatl = 1000. * np.exp(c1 + c2/tt + c3/(tt**2) + c4/(tt**3)) / bk / tt
 
-  # Ambient water vapor number density 
-  # if the abmient RH > 1, then use RH = 1
-  if (rhamb >= 0.9999) :
-    rnwamb = 0.9999 * rnsatl
-  else :
-    rnwamb = rnsatl * rhamb  
+            # Ice sat. H2O number density
+            fexp = np.exp((bb - tls/bd) * tls / (tls + bc))
+            rnsati = 1.e3 * ba * fexp / bk / (tls + t0) 
 
-  # Find the peak plume  saturation ratio by starting with a very large
-  # deltaT (= Tplume-Tamb) and slowly decrementing deltaT until the peak
-  # saturation is found.  i.e., start with conditions very near the
-  # engine exit and move downstream.
-  deltaT = 100.
-  slplume_prev = [0.]
+            # Ambient RHI
+            rhiamb = rhamb * rnsatl/rnsati 
 
-  while (slplume[0] > slplume_prev[0]) :
-    slplume_prev[0] = slplume[0]
+            # Ambient water vapor number density 
+            # if the abmient RH > 1, then use RH = 1
+            if (rhamb >= 0.9999) :
+              rnwamb = 0.9999 * rnsatl
+            else :
+              rnwamb = rnsatl * rhamb  
 
-    deltaT = deltaT / 1.3
-    tplume = tamb + deltaT
-    tt = tplume + t0
+            # Find the peak plume  saturation ratio by starting with a very large
+            # deltaT (= Tplume-tls) and slowly decrementing deltaT until the peak
+            # saturation is found.  i.e., start with conditions very near the
+            # engine exit and move downstream.
+            deltaT = 100.
+            slplume_prev = [0.]
 
-    # Liquid sat. H2O number density
-    rnsatl = 1000. * np.exp(c1 + c2/tt + c3/(tt**2) + c4/(tt**3)) / bk / tt
+            while (slplume[0] > slplume_prev[0]) :
+              slplume_prev[0] = slplume[0]
 
-    slplume[0] = (rnwamb/rnsatl + rnair * wexh * cp * rh2o * deltaT / 
-                                  (rnsatl * delh * (1. - effic) * rd))
+              deltaT = deltaT / 1.3
+              tplume = tls + deltaT
+              tt = tplume + t0
 
-if (rhamb >= 0.9999) :
-  print "Warning! RH > 100%;  RH = " + (rhamb * 100)
+              # Liquid sat. H2O number density
+              rnsatl = 1000. * np.exp(c1 + c2/tt + c3/(tt**2) + c4/(tt**3)) / bk / tt
 
-print "RHI ambient = " + str(rhiamb * 100)
-print "Tls ambient = " + str(tamb)
+              slplume[0] = (rnwamb/rnsatl + rnair * wexh * cp * rh2o * deltaT / 
+                                            (rnsatl * delh * (1. - effic) * rd))
 
+          if (rhamb >= 0.9999) :
+            print "Warning! RH > 100%;  RH = " + str(rhamb * 100)
+
+          # if tamb < Tls then contrail will form
+          tamb = float(data[2])
+          # outfile.write("tamb: " + str(tamb) + str((tamb - tls) < 0.) + " Tls: " + str(tls) + "\n")
+          if tamb < tls :
+            contrails += 1
+            output = ("Pressure: " + str(pamb/1e3) + "mbar"+ " RHI: " + 
+                      str(rhiamb * 100) + "% Tls: " + str(tls) + "C" +
+                      " Tamb: " + str(tamb) + "C ---> PREDICTED"+ "\n")
+            outfile.write(output)
+          else :
+            # Configure point for graph
+            rtemp.append(tamb)
+            rpress.append(pamb/1e3)
+            rrh.append()
+
+outfile.write("\nTotal Lines: " + str(total))
+outfile.write("\nContrail Predictions: " + str(contrails))
 
 
 
