@@ -28,8 +28,16 @@ effic = 0.3e0                # fraction of combustion heat converted to propulsi
 
 def predict_line(data_line):
 	pamb = float(data_line[0]) * 1.e3      # convert to bar
-	rhamb = float(data_line[5]) / 100.
 	tamb = float(data_line[2])
+	if data_line[-1] :
+		rhamb = float(data_line[5]) / 100.
+	else :
+		rhamb = float(data_line[4]) / 100.
+
+	print "pamb: " + str(pamb)
+	print "tamb: " + str(tamb)
+	print "rhamb: " + str(rhamb)
+
 
 	#  To find threshold temperature, begin at high ambient temperature and
 	#  steadily decrease the temperature.  At each step, calculate the maximum

@@ -25,7 +25,7 @@ local_count = 0
 # target height for airplanes in meters
 target = 11300
 margin = 1000
-close_lines = np.array([])
+close_lines = np.array([[0.] * 13])
 
 # with open("data/2017orderedweather87418.txt", "r") as infile:
 with open("data/weather.txt", "r") as infile:
@@ -41,6 +41,7 @@ with open("data/weather.txt", "r") as infile:
 			days.append(" ".join(data[-4:]))
 			count_per_day.append(local_count)
 			local_count = 0
+			next = 0
 
 		# if the line is a data line
 		# (not re.search('[^\.0-9]', data[0])) only returns True when 
@@ -53,25 +54,37 @@ with open("data/weather.txt", "r") as infile:
 		   	(not re.search('[^\.0-9]', data[1])) :
 			
 		   	# Only test a single data height closest to the target
-		   	# height = float(data[1])
-		   	# if margin > abs(target - height) :
-		   	# 	print 'foo'
-		   	# 	print data
-		   	# 	np.append(close_lines, np.array(data))
-		   	# elif margin < abs(target - height) and (height > target) :
+		   	height = float(data[1])
+		   	if margin >= abs(target - height) :
+		   		print "data " + str(data)
+		   		print "close_lines before: " + str(close_lines)
+		   		print np.array(data).astype(np.float)
+		   		line = np.array(data).astype(np.float)
+		   		line = np.lib.pad(line, (0, 13 - len(line)), "constant", constant_values=(0, 0))    
+		   		close_lines = np.vstack([close_lines, line])
+		   		print "close_lines after:" + str(close_lines)
+		   	elif margin < abs(target - height) and (height > target) and next == 0 :
 
 		   		# find row with height closest to target
-		   		# print height
-		   		# print target
-		   		# print close_lines
-		   		# print np.abs(close_lines[:,1] - target)
-		   		# closest = close_lines[np.abs(close_lines[:,1] - target).argmin()]
+		   		print local_count
+		   		print "bar"
+		   		print height
+		   		print close_lines
+		   		# print "go go" + str(np.abs(close_lines[:,1] - target))
+		   		if close_lines.shape[0] > 1 :
+		   			closest = close_lines[np.abs(close_lines[:,1] - target).argmin()]
+		   		else :
+		   			closest = close_lines[np.abs(close_lines[0][1] - target).argmin()]
 
-		   		# print closest
+		   		print "closest: " + str(closest)
 
 			   	# find way to make a new bin
-			   	pred = predict_line(data)
+			   	pred = predict_line(closest)
 			   	local_count += 1 if pred else 0
+			   	next = 1
+			   	close_lines = np.array([[0.] * 13])
+
+
 
 offline.plot({'data': [{'x': days, 'y': count_per_day}], 
                'layout': {'title': 'Contrail Predictions for all Readings a Day for 2017 (Mendoza)', 
