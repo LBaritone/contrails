@@ -27,8 +27,8 @@ target = 11300
 margin = 1000
 close_lines = np.array([])
 
-with open("data/2017orderedweather87418.txt", "r") as infile:
-# with open("data/weather.txt", "r") as infile:
+# with open("data/2017orderedweather87418.txt", "r") as infile:
+with open("data/weather.txt", "r") as infile:
 	# get the station number from the first line 
 	firstline = infile.readline().split()
 	first_len = len(firstline)
@@ -53,32 +53,32 @@ with open("data/2017orderedweather87418.txt", "r") as infile:
 		   	(not re.search('[^\.0-9]', data[1])) :
 			
 		   	# Only test a single data height closest to the target
-		   	height = float(data[1])
-		   	if margin > abs(target - height) :
-		   		print 'foo'
-		   		print data
-		   		np.append(close_lines, np.array(data))
-		   	elif margin < abs(target - height) and (height > target) :
+		   	# height = float(data[1])
+		   	# if margin > abs(target - height) :
+		   	# 	print 'foo'
+		   	# 	print data
+		   	# 	np.append(close_lines, np.array(data))
+		   	# elif margin < abs(target - height) and (height > target) :
 
 		   		# find row with height closest to target
-		   		print height
-		   		print target
-		   		print close_lines
-		   		print np.abs(close_lines[:,1] - target)
-		   		closest = close_lines[np.abs(close_lines[:,1] - target).argmin()]
+		   		# print height
+		   		# print target
+		   		# print close_lines
+		   		# print np.abs(close_lines[:,1] - target)
+		   		# closest = close_lines[np.abs(close_lines[:,1] - target).argmin()]
 
-		   		print closest
+		   		# print closest
 
 			   	# find way to make a new bin
-			   	pred = predict_line(closest)
+			   	pred = predict_line(data)
 			   	local_count += 1 if pred else 0
 
-# offline.plot({'data': [{'x': days, 'y': count_per_day}], 
-#                'layout': {'title': 'Contrail Predictions for all Readings a Day for 2017 (Mendoza)', 
-#                           'font': dict(size = 16),
-#                           'xaxis': dict(title = "Time"),
-#                           'yaxis': dict(title = 'Number of Contrail Predictions')}},
-#              image='png')
+offline.plot({'data': [{'x': days, 'y': count_per_day}], 
+               'layout': {'title': 'Contrail Predictions for all Readings a Day for 2017 (Mendoza)', 
+                          'font': dict(size = 16),
+                          'xaxis': dict(title = "Time"),
+                          'yaxis': dict(title = 'Number of Contrail Predictions')}},
+             image='png')
 
 
 
