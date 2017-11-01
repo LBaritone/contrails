@@ -34,11 +34,6 @@ def predict_line(data_line):
 	else :
 		rhamb = float(data_line[4]) / 100.
 
-	print "pamb: " + str(pamb)
-	print "tamb: " + str(tamb)
-	print "rhamb: " + str(rhamb)
-
-
 	#  To find threshold temperature, begin at high ambient temperature and
 	#  steadily decrease the temperature.  At each step, calculate the maximum
 	#  plume relative humidity (with respect to water) [RH].  When the peak RH

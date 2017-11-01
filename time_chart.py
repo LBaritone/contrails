@@ -27,22 +27,34 @@ target = 11300
 margin = 1000
 close_lines = np.array([[0.] * 13])
 
-# with open("data/2017orderedweather87418.txt", "r") as infile:
-with open("data/weather.txt", "r") as infile:
+with open("data/2017orderedweather87418.txt", "r") as infile:
+# with open("data/weather.txt", "r") as infile:
 	# get the station number from the first line 
 	firstline = infile.readline().split()
 	first_len = len(firstline)
 	station = firstline[0]
+	cur_date = " ".join(firstline[-3:])
 	for line in infile:
 		data = line.split()
 
-		# if you see data for a new day or time on a day here then add a new bin
-		if (len(data) == first_len and data[0] == station) :
-			days.append(" ".join(data[-4:]))
-			count_per_day.append(local_count)
-			local_count = 0
-			next = 0
+		
+		# if (len(data) == first_len and data[0] == station and " ".join(data[-3:]) != cur_date) :
+		# 	days.append(" ".join(data[-3:]))
+		# 	count_per_day.append(local_count)
+		# 	cur_date = " ".join(data[-3:])
+		# 	local_count = 0
+		# 	print "curr" + cur_date
 
+		# if is a new bock of data (new day or new time on a day)
+		if (len(data) == first_len and data[0] == station) :
+			next = 0
+			# if you see data for a new day here then add a new bin
+			if (" ".join(data[-3:]) != cur_date) :
+				days.append(" ".join(data[-3:]))
+				count_per_day.append(local_count)
+				cur_date = " ".join(data[-3:])
+				local_count = 0
+			
 		# if the line is a data line
 		# (not re.search('[^\.0-9]', data[0])) only returns True when 
    		# data[0] contains only digits and "."s
@@ -52,31 +64,20 @@ with open("data/weather.txt", "r") as infile:
 		   	(not data[0].startswith('hPa')) and \
 		   	(not re.search('[^\.0-9]', data[0])) and \
 		   	(not re.search('[^\.0-9]', data[1])) :
-			
+
 		   	# Only test a single data height closest to the target
 		   	height = float(data[1])
 		   	if margin >= abs(target - height) :
-		   		print "data " + str(data)
-		   		print "close_lines before: " + str(close_lines)
-		   		print np.array(data).astype(np.float)
 		   		line = np.array(data).astype(np.float)
 		   		line = np.lib.pad(line, (0, 13 - len(line)), "constant", constant_values=(0, 0))    
 		   		close_lines = np.vstack([close_lines, line])
-		   		print "close_lines after:" + str(close_lines)
 		   	elif margin < abs(target - height) and (height > target) and next == 0 :
 
 		   		# find row with height closest to target
-		   		print local_count
-		   		print "bar"
-		   		print height
-		   		print close_lines
-		   		# print "go go" + str(np.abs(close_lines[:,1] - target))
 		   		if close_lines.shape[0] > 1 :
 		   			closest = close_lines[np.abs(close_lines[:,1] - target).argmin()]
 		   		else :
 		   			closest = close_lines[np.abs(close_lines[0][1] - target).argmin()]
-
-		   		print "closest: " + str(closest)
 
 			   	# find way to make a new bin
 			   	pred = predict_line(closest)
@@ -93,7 +94,6 @@ offline.plot({'data': [{'x': days, 'y': count_per_day}],
                           'yaxis': dict(title = 'Number of Contrail Predictions')}},
              image='png')
 
-
-
+print len(days)
 
 
