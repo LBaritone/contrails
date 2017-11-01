@@ -37,14 +37,6 @@ with open("data/2017orderedweather87418.txt", "r") as infile:
 	for line in infile:
 		data = line.split()
 
-		
-		# if (len(data) == first_len and data[0] == station and " ".join(data[-3:]) != cur_date) :
-		# 	days.append(" ".join(data[-3:]))
-		# 	count_per_day.append(local_count)
-		# 	cur_date = " ".join(data[-3:])
-		# 	local_count = 0
-		# 	print "curr" + cur_date
-
 		# if is a new bock of data (new day or new time on a day)
 		if (len(data) == first_len and data[0] == station) :
 			next = 0
