@@ -1,8 +1,7 @@
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import pyplot
 import numpy as np
 import re
-from matplotlib import pyplot
-from mpl_toolkits.mplot3d import Axes3D
-
 
 fig = pyplot.figure()
 ax = Axes3D(fig)
@@ -16,15 +15,8 @@ rrh = []
 ptemp = []
 ppress = []
 prh = []
-
-
-ax.scatter(x, y, z)
-pyplot.show()
-
-
-
   
-# !  Physical constants 
+# Physical constants 
 t0 = 273.16e0                # Absolute T
 rd = 287.05e4                # Gas constant for dry air
 rh2o = 461.5e4               # Gas constant for H2O
@@ -52,10 +44,9 @@ effic = 0.3e0                # fraction of combustion heat converted to propulsi
 total = 0
 contrails = 0
 
-outfile = open("prediction.txt", "w")
-with open("weather.txt", "r") as infile:
+outfile = open("preds/2017prediction87418.txt", "w")
+with open("data/2017weather87418.txt", "r") as infile:
     for line in infile:
-        total += 1
         data = line.split()
         if (len(data) > 10) and \
            (not data[0].startswith('--')) and \
@@ -64,6 +55,7 @@ with open("weather.txt", "r") as infile:
            (not re.search('[^\.0-9]', data[0])) and \
            (not re.search('[^\.0-9]', data[1])) :
 
+          total += 1                        # total valid readings
           pamb = float(data[0]) * 1.e3      # convert to bar
           rhamb = float(data[5]) / 100.
 
@@ -109,6 +101,11 @@ with open("weather.txt", "r") as infile:
             # saturation is found.  i.e., start with conditions very near the
             # engine exit and move downstream.
             deltaT = 100.
+
+            # Needs to be a list to access inside while loop
+            ##########################################
+            ############ plume = contrail ############
+            ##########################################
             slplume_prev = [0.]
 
             while (slplume[0] > slplume_prev[0]) :
@@ -136,16 +133,28 @@ with open("weather.txt", "r") as infile:
                       str(rhiamb * 100) + "% Tls: " + str(tls) + "C" +
                       " Tamb: " + str(tamb) + "C ---> PREDICTED"+ "\n")
             outfile.write(output)
+
+            # Configure prediction point for graph
+            ptemp.append(tamb)
+            ppress.append(pamb/1e3)
+            prh.append(rhamb * 100)
           else :
-            # Configure point for graph
+            # Configure reading point for graph
             rtemp.append(tamb)
             rpress.append(pamb/1e3)
-            rrh.append()
+            rrh.append(rhamb * 100)
 
 outfile.write("\nTotal Lines: " + str(total))
 outfile.write("\nContrail Predictions: " + str(contrails))
 
 
+ax.scatter(rtemp, rpress, rrh, c='b')
+ax.scatter(ptemp, ppress, prh, c='r')
+ax.set_xlabel('Ambient Temperature (C)')
+ax.set_ylabel('Ambient Pressure (mbar)')
+ax.set_zlabel('Ambient RH')
+
+pyplot.show()
 
 
 
